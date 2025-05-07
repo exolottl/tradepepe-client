@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
 
@@ -112,9 +112,9 @@ const Journal = () => {
 
   // Handle change in new trade entry fields
   const handleNewTradeChange = (field: keyof TradeEntry, value: any) => {
-    setNewTrade(prev => ({
+    setNewTrade((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -134,12 +134,14 @@ const Journal = () => {
       setup: newTrade.setup || "N/A",
       review: newTrade.review || "N/A",
       price: newTrade.price || 0,
-      result: newTrade.resultValue ? `${newTrade.resultValue < 0 ? "-" : ""}$ ${Math.abs(newTrade.resultValue).toLocaleString()}` : "",
+      result: newTrade.resultValue
+        ? `${newTrade.resultValue < 0 ? "-" : ""}$ ${Math.abs(newTrade.resultValue).toLocaleString()}`
+        : "",
       resultValue: newTrade.resultValue || 0,
     };
-    
-    setTradeEntries(prev => [...prev, tradeToAdd]);
-    
+
+    setTradeEntries((prev) => [...prev, tradeToAdd]);
+
     // Reset the new trade entry
     setNewTrade({
       date: format(new Date(), "dd/MM/yy"),
@@ -155,10 +157,12 @@ const Journal = () => {
     });
   };
 
-  // Sort trades by date and time
-  const sortedTrades = [...tradeEntries].sort((a, b) => {
-    const dateCompare = new Date(a.date.split('/').reverse().join('-')) - 
-                        new Date(b.date.split('/').reverse().join('-'));
+  const sortedTrades = [...tradeEntries].sort((b, a) => {
+    const dateCompare =
+      //@ts-ignore
+      new Date(a.date.split("/").reverse().join("-")) -
+      //@ts-ignore
+      new Date(b.date.split("/").reverse().join("-"));
     if (dateCompare !== 0) return dateCompare;
     return a.time.localeCompare(b.time);
   });
@@ -196,52 +200,75 @@ const Journal = () => {
             <TableBody>
               {/* Row for adding new trade */}
               <TableRow className="border-t-2 border-b-2 border-dashed border-primary/20">
-                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Buy" && (
-                    <Input 
-                      value={newTrade.date || ""} 
-                      onChange={(e) => handleNewTradeChange("date", e.target.value)} 
-                      className="h-8" 
+                    <Input
+                      value={newTrade.date || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange("date", e.target.value)
+                      }
+                      className="h-8"
                       placeholder="DD/MM/YY"
                     />
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Buy" && (
-                    <Input 
-                      value={newTrade.time || ""} 
-                      onChange={(e) => handleNewTradeChange("time", e.target.value)} 
-                      className="h-8" 
+                    <Input
+                      value={newTrade.time || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange("time", e.target.value)
+                      }
+                      className="h-8"
                       placeholder="HH:MMA"
                     />
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Buy" && (
-                    <Input 
-                      type="number" 
-                      value={newTrade.qty || ""} 
-                      onChange={(e) => handleNewTradeChange("qty", Number(e.target.value))} 
-                      className="h-8" 
+                    <Input
+                      type="number"
+                      value={newTrade.qty || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange("qty", Number(e.target.value))
+                      }
+                      className="h-8"
                       placeholder="100"
                     />
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Buy" && (
-                    <Input 
-                      value={newTrade.symbol || ""} 
-                      onChange={(e) => handleNewTradeChange("symbol", e.target.value.toUpperCase())} 
-                      className="h-8" 
+                    <Input
+                      value={newTrade.symbol || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange(
+                          "symbol",
+                          e.target.value.toUpperCase(),
+                        )
+                      }
+                      className="h-8"
                       placeholder="AAPL"
                     />
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Buy" && (
-                    <Select 
-                      value={newTrade.setup || ""} 
-                      onValueChange={(value) => handleNewTradeChange("setup", value)}
+                    <Select
+                      value={newTrade.setup || ""}
+                      onValueChange={(value) =>
+                        handleNewTradeChange("setup", value)
+                      }
                     >
                       <SelectTrigger className="h-8">
                         <SelectValue placeholder="Setup" />
@@ -255,11 +282,15 @@ const Journal = () => {
                     </Select>
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Buy" && (
-                    <Select 
-                      value={newTrade.review || ""} 
-                      onValueChange={(value) => handleNewTradeChange("review", value)}
+                    <Select
+                      value={newTrade.review || ""}
+                      onValueChange={(value) =>
+                        handleNewTradeChange("review", value)
+                      }
                     >
                       <SelectTrigger className="h-8">
                         <SelectValue placeholder="Review" />
@@ -274,26 +305,35 @@ const Journal = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Input 
-                    type="number" 
-                    value={newTrade.price || ""} 
-                    onChange={(e) => handleNewTradeChange("price", Number(e.target.value))} 
-                    className="h-8" 
+                  <Input
+                    type="number"
+                    value={newTrade.price || ""}
+                    onChange={(e) =>
+                      handleNewTradeChange("price", Number(e.target.value))
+                    }
+                    className="h-8"
                     placeholder="0.00"
                   />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <Input 
-                      type="number" 
-                      value={newTrade.resultValue || ""} 
-                      onChange={(e) => handleNewTradeChange("resultValue", Number(e.target.value))} 
-                      className="h-8" 
+                    <Input
+                      type="number"
+                      value={newTrade.resultValue || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange(
+                          "resultValue",
+                          Number(e.target.value),
+                        )
+                      }
+                      className="h-8"
                       placeholder="0.00"
                     />
-                    <Select 
-                      value={newTrade.action || "Buy"} 
-                      onValueChange={(value: "Buy" | "Sell") => handleNewTradeChange("action", value)}
+                    <Select
+                      value={newTrade.action || "Buy"}
+                      onValueChange={(value: "Buy" | "Sell") =>
+                        handleNewTradeChange("action", value)
+                      }
                     >
                       <SelectTrigger className="h-8 w-20">
                         <SelectValue />
@@ -303,24 +343,32 @@ const Journal = () => {
                         <SelectItem value="Sell">Sell</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button onClick={addNewTrade} size="sm" className="h-8">Add</Button>
+                    <Button onClick={addNewTrade} size="sm" className="h-8">
+                      Add
+                    </Button>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Input 
-                    type="number" 
-                    value={newTrade.price || ""} 
-                    onChange={(e) => handleNewTradeChange("price", Number(e.target.value))} 
-                    className="h-8" 
+                  <Input
+                    type="number"
+                    value={newTrade.price || ""}
+                    onChange={(e) =>
+                      handleNewTradeChange("price", Number(e.target.value))
+                    }
+                    className="h-8"
                     placeholder="0.00"
                     disabled={newTrade.action !== "Sell"}
                   />
                 </TableCell>
-                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Sell" && (
-                    <Select 
-                      value={newTrade.review || ""} 
-                      onValueChange={(value) => handleNewTradeChange("review", value)}
+                    <Select
+                      value={newTrade.review || ""}
+                      onValueChange={(value) =>
+                        handleNewTradeChange("review", value)
+                      }
                     >
                       <SelectTrigger className="h-8">
                         <SelectValue placeholder="Review" />
@@ -334,11 +382,15 @@ const Journal = () => {
                     </Select>
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Sell" && (
-                    <Select 
-                      value={newTrade.setup || ""} 
-                      onValueChange={(value) => handleNewTradeChange("setup", value)}
+                    <Select
+                      value={newTrade.setup || ""}
+                      onValueChange={(value) =>
+                        handleNewTradeChange("setup", value)
+                      }
                     >
                       <SelectTrigger className="h-8">
                         <SelectValue placeholder="Setup" />
@@ -352,43 +404,62 @@ const Journal = () => {
                     </Select>
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Sell" && (
-                    <Input 
-                      value={newTrade.symbol || ""} 
-                      onChange={(e) => handleNewTradeChange("symbol", e.target.value.toUpperCase())} 
-                      className="h-8" 
+                    <Input
+                      value={newTrade.symbol || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange(
+                          "symbol",
+                          e.target.value.toUpperCase(),
+                        )
+                      }
+                      className="h-8"
                       placeholder="AAPL"
                     />
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Sell" && (
-                    <Input 
-                      type="number" 
-                      value={newTrade.qty || ""} 
-                      onChange={(e) => handleNewTradeChange("qty", Number(e.target.value))} 
-                      className="h-8" 
+                    <Input
+                      type="number"
+                      value={newTrade.qty || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange("qty", Number(e.target.value))
+                      }
+                      className="h-8"
                       placeholder="100"
                     />
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Sell" && (
-                    <Input 
-                      value={newTrade.time || ""} 
-                      onChange={(e) => handleNewTradeChange("time", e.target.value)} 
-                      className="h-8" 
+                    <Input
+                      value={newTrade.time || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange("time", e.target.value)
+                      }
+                      className="h-8"
                       placeholder="HH:MMA"
                     />
                   )}
                 </TableCell>
-                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                <TableCell
+                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
+                >
                   {newTrade.action === "Sell" && (
-                    <Input 
-                      value={newTrade.date || ""} 
-                      onChange={(e) => handleNewTradeChange("date", e.target.value)} 
-                      className="h-8" 
+                    <Input
+                      value={newTrade.date || ""}
+                      onChange={(e) =>
+                        handleNewTradeChange("date", e.target.value)
+                      }
+                      className="h-8"
                       placeholder="DD/MM/YY"
                     />
                   )}
@@ -397,51 +468,94 @@ const Journal = () => {
 
               {/* Display existing trades */}
               {sortedTrades.map((trade) => (
-                <TableRow key={trade.id} className={trade.action === "Buy" ? "bg-green-50/10" : "bg-red-50/10"}>
-                  <TableCell>{trade.action === "Buy" ? trade.date : ""}</TableCell>
-                  <TableCell>{trade.action === "Buy" ? trade.time : ""}</TableCell>
-                  <TableCell>{trade.action === "Buy" ? trade.qty : ""}</TableCell>
-                  <TableCell className={trade.action === "Buy" ? "font-medium" : ""}>{trade.action === "Buy" ? trade.symbol : ""}</TableCell>
+                <TableRow
+                  key={trade.id}
+                  className={
+                    trade.action === "Buy" ? "bg-green-50/10" : "bg-red-50/10"
+                  }
+                >
+                  <TableCell>
+                    {trade.action === "Buy" ? trade.date : ""}
+                  </TableCell>
+                  <TableCell>
+                    {trade.action === "Buy" ? trade.time : ""}
+                  </TableCell>
+                  <TableCell>
+                    {trade.action === "Buy" ? trade.qty : ""}
+                  </TableCell>
+                  <TableCell
+                    className={trade.action === "Buy" ? "font-medium" : ""}
+                  >
+                    {trade.action === "Buy" ? trade.symbol : ""}
+                  </TableCell>
                   <TableCell>
                     {trade.action === "Buy" && (
-                      <span className={`px-2 py-1 rounded text-xs ${getSetupClass(trade.setup)}`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${getSetupClass(trade.setup)}`}
+                      >
                         {trade.setup}
                       </span>
                     )}
                   </TableCell>
                   <TableCell>
                     {trade.action === "Buy" && (
-                      <span className={`px-2 py-1 rounded text-xs ${getReviewClass(trade.review)}`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${getReviewClass(trade.review)}`}
+                      >
                         {trade.review}
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="font-medium">${trade.price.toFixed(2)}</TableCell>
-                  <TableCell className={`font-bold ${trade.resultValue < 0 ? "text-red-500" : "text-green-500"}`}>{trade.result}</TableCell>
-                  <TableCell className="font-medium">${trade.price.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">
+                    ${trade.price.toFixed(2)}
+                  </TableCell>
+                  <TableCell
+                    className={`font-bold ${trade.resultValue < 0 ? "text-red-500" : "text-green-500"}`}
+                  >
+                    {trade.result}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    ${trade.price.toFixed(2)}
+                  </TableCell>
                   <TableCell>
                     {trade.action === "Sell" && (
-                      <span className={`px-2 py-1 rounded text-xs ${getReviewClass(trade.review)}`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${getReviewClass(trade.review)}`}
+                      >
                         {trade.review}
                       </span>
                     )}
                   </TableCell>
                   <TableCell>
                     {trade.action === "Sell" && (
-                      <span className={`px-2 py-1 rounded text-xs ${getSetupClass(trade.setup)}`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${getSetupClass(trade.setup)}`}
+                      >
                         {trade.setup}
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className={trade.action === "Sell" ? "font-medium" : ""}>{trade.action === "Sell" ? trade.symbol : ""}</TableCell>
-                  <TableCell>{trade.action === "Sell" ? trade.qty : ""}</TableCell>
-                  <TableCell>{trade.action === "Sell" ? trade.time : ""}</TableCell>
-                  <TableCell>{trade.action === "Sell" ? trade.date : ""}</TableCell>
+                  <TableCell
+                    className={trade.action === "Sell" ? "font-medium" : ""}
+                  >
+                    {trade.action === "Sell" ? trade.symbol : ""}
+                  </TableCell>
+                  <TableCell>
+                    {trade.action === "Sell" ? trade.qty : ""}
+                  </TableCell>
+                  <TableCell>
+                    {trade.action === "Sell" ? trade.time : ""}
+                  </TableCell>
+                  <TableCell>
+                    {trade.action === "Sell" ? trade.date : ""}
+                  </TableCell>
                 </TableRow>
               ))}
               {tradeEntries.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={15} className="text-center">No trades recorded</TableCell>
+                  <TableCell colSpan={15} className="text-center">
+                    No trades recorded
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
