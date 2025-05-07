@@ -15,5 +15,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: "https://tradepepe-frontend.pages.dev"
 });
