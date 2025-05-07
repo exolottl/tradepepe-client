@@ -9,7 +9,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -47,19 +46,28 @@ import { cn } from "@/lib/utils";
 type TradeEntry = {
   id: number;
   date: string;
+  time: string;
   symbol: string;
+  qty: number;
   action: "Buy" | "Sell";
-  quantity: number;
+  setup: string;
+  review: string;
   price: number;
-  total: number;
+  result: string;
+  resultValue: number;
 };
 
 const formSchema = z.object({
   date: z.date(),
+  time: z.string(),
   symbol: z.string().min(1, "Symbol is required").max(5),
+  qty: z.number().positive("Quantity must be positive"),
   action: z.enum(["Buy", "Sell"]),
-  quantity: z.number().positive("Quantity must be positive"),
+  setup: z.string(),
   price: z.number().positive("Price must be positive"),
+  review: z.string().optional(),
+  result: z.string().optional(),
+  resultValue: z.number().optional(),
 });
 
 const Journal = () => {
@@ -67,46 +75,72 @@ const Journal = () => {
   const [tradeEntries, setTradeEntries] = useState<TradeEntry[]>([
     {
       id: 1,
-      date: "2025-05-01",
+      date: "23/12/24",
+      time: "09:14AM",
       symbol: "AAPL",
+      qty: 100,
       action: "Buy",
-      quantity: 10,
-      price: 150,
-      total: 1500,
+      setup: "Breakout",
+      review: "Good Entry",
+      price: 180,
+      result: "$ 650",
+      resultValue: 650,
     },
     {
       id: 2,
-      date: "2025-05-02",
-      symbol: "TSLA",
+      date: "23/12/24",
+      time: "09:50AM",
+      symbol: "AAPL",
+      qty: 75,
       action: "Sell",
-      quantity: 5,
-      price: 750,
-      total: 3750,
+      setup: "Reversal",
+      review: "Early Entry",
+      price: 183,
+      result: "$ 510",
+      resultValue: 510,
     },
     {
       id: 3,
-      date: "2025-05-03",
-      symbol: "GOOGL",
+      date: "23/12/24",
+      time: "10:15AM",
+      symbol: "AAPL",
+      qty: 100,
       action: "Buy",
-      quantity: 20,
-      price: 2800,
-      total: 56000,
+      setup: "Reversal",
+      review: "Early Entry",
+      price: 180,
+      result: "$ 1,000",
+      resultValue: 1000,
+    },
+    {
+      id: 4,
+      date: "23/12/24",
+      time: "11:05AM",
+      symbol: "AAPL",
+      qty: 100,
+      action: "Sell",
+      setup: "N/A",
+      review: "SL Hit",
+      price: 178,
+      result: "-$ 200",
+      resultValue: -200,
     },
   ]);
 
-  // Filter trades into Long and Short
-  const longTrades = tradeEntries.filter((trade) => trade.action === "Buy");
-  const shortTrades = tradeEntries.filter((trade) => trade.action === "Sell");
-  
   // Form setup with react-hook-form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date(),
+      time: format(new Date(), "hh:mma"),
       symbol: "",
+      qty: 0,
       action: "Buy",
-      quantity: 0,
+      setup: "",
       price: 0,
+      review: "",
+      result: "",
+      resultValue: 0,
     },
   });
 
@@ -114,23 +148,40 @@ const Journal = () => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newTrade: TradeEntry = {
       id: Date.now(),
-      date: format(values.date, "yyyy-MM-dd"),
+      date: format(values.date, "dd/MM/yy"),
+      time: values.time,
       symbol: values.symbol.toUpperCase(),
+      qty: values.qty,
       action: values.action,
-      quantity: values.quantity,
+      setup: values.setup,
+      review: values.review || "",
       price: values.price,
-      total: values.quantity * values.price,
+      result: values.resultValue ? `${values.resultValue < 0 ? "-" : ""}$ ${Math.abs(values.resultValue).toLocaleString()}` : "",
+      resultValue: values.resultValue || 0,
     };
     
     setTradeEntries((prev) => [...prev, newTrade]);
     form.reset({
       date: new Date(),
+      time: format(new Date(), "hh:mma"),
       symbol: "",
+      qty: 0,
       action: "Buy",
-      quantity: 0,
+      setup: "",
       price: 0,
+      review: "",
+      result: "",
+      resultValue: 0,
     });
   }
+
+  // Sort trades by date and time
+  const sortedTrades = [...tradeEntries].sort((a, b) => {
+    const dateCompare = new Date(a.date.split('/').reverse().join('-')) - 
+                        new Date(b.date.split('/').reverse().join('-'));
+    if (dateCompare !== 0) return dateCompare;
+    return a.time.localeCompare(b.time);
+  });
 
   return (
     <div className="container mx-auto py-6 space-y-8">
@@ -144,7 +195,7 @@ const Journal = () => {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Date Field */}
                 <FormField
                   control={form.control}
@@ -163,7 +214,7 @@ const Journal = () => {
                               )}
                             >
                               {field.value ? (
-                                format(field.value, "PPP")
+                                format(field.value, "dd/MM/yy")
                               ) : (
                                 <span>Pick a date</span>
                               )}
@@ -184,6 +235,39 @@ const Journal = () => {
                   )}
                 />
 
+                {/* Time Field */}
+                <FormField
+                  control={form.control}
+                  name="time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time</FormLabel>
+                      <FormControl>
+                        <Input placeholder="09:30AM" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Quantity Field */}
+                <FormField
+                  control={form.control}
+                  name="qty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Qty</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="100" 
+                          {...field}
+                          onChange={e => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
                 {/* Symbol Field */}
                 <FormField
                   control={form.control}
@@ -193,6 +277,99 @@ const Journal = () => {
                       <FormLabel>Symbol</FormLabel>
                       <FormControl>
                         <Input placeholder="AAPL" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Setup Field */}
+                <FormField
+                  control={form.control}
+                  name="setup"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Setup</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select setup" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Breakout">Breakout</SelectItem>
+                          <SelectItem value="Reversal">Reversal</SelectItem>
+                          <SelectItem value="Vwap">Vwap</SelectItem>
+                          <SelectItem value="N/A">N/A</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Review Field */}
+                <FormField
+                  control={form.control}
+                  name="review"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Review</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select review" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Good Entry">Good Entry</SelectItem>
+                          <SelectItem value="Early Entry">Early Entry</SelectItem>
+                          <SelectItem value="SL Hit">SL Hit</SelectItem>
+                          <SelectItem value="Profit Exit">Profit Exit</SelectItem>
+                          <SelectItem value="Partial Exit">Partial Exit</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Price Field */}
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="180.00" 
+                          {...field}
+                          onChange={e => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Result Value Field */}
+                <FormField
+                  control={form.control}
+                  name="resultValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Result ($)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="0.00" 
+                          {...field}
+                          onChange={e => field.onChange(Number(e.target.value))}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -223,44 +400,6 @@ const Journal = () => {
                   )}
                 />
 
-                {/* Quantity Field */}
-                <FormField
-                  control={form.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="10" 
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Price Field */}
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="150.00" 
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
                 {/* Submit Button */}
                 <Button type="submit" className="self-end">
                   Add Trade
@@ -271,94 +410,121 @@ const Journal = () => {
         </CardContent>
       </Card>
 
-      {/* Tables Container - Side by Side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Long Trades Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-green-600">Long Trades (Buy)</CardTitle>
-            <CardDescription>
-              Current positions you're holding
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+      {/* Unified Trades Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Trade History</CardTitle>
+          <CardDescription>
+            Complete record of your trading activity
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead>Date</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Qty</TableHead>
+                <TableHead>Symbol</TableHead>
+                <TableHead>Setup</TableHead>
+                <TableHead>Review</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Result</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Review</TableHead>
+                <TableHead>Setup</TableHead>
+                <TableHead>Symbol</TableHead>
+                <TableHead>Qty</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedTrades.map((trade) => (
+                <TableRow key={trade.id} className={trade.action === "Buy" ? "bg-green-50/10" : "bg-red-50/10"}>
+                  <TableCell>{trade.action === "Buy" ? trade.date : ""}</TableCell>
+                  <TableCell>{trade.action === "Buy" ? trade.time : ""}</TableCell>
+                  <TableCell>{trade.action === "Buy" ? trade.qty : ""}</TableCell>
+                  <TableCell className={trade.action === "Buy" ? "font-medium" : ""}>{trade.action === "Buy" ? trade.symbol : ""}</TableCell>
+                  <TableCell>
+                    {trade.action === "Buy" && (
+                      <span className={`px-2 py-1 rounded text-xs ${getSetupClass(trade.setup)}`}>
+                        {trade.setup}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {trade.action === "Buy" && (
+                      <span className={`px-2 py-1 rounded text-xs ${getReviewClass(trade.review)}`}>
+                        {trade.review}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">${trade.price.toFixed(2)}</TableCell>
+                  <TableCell className={`font-bold ${trade.resultValue < 0 ? "text-red-500" : "text-green-500"}`}>{trade.result}</TableCell>
+                  <TableCell className="font-medium">${trade.price.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {trade.action === "Sell" && (
+                      <span className={`px-2 py-1 rounded text-xs ${getReviewClass(trade.review)}`}>
+                        {trade.review}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {trade.action === "Sell" && (
+                      <span className={`px-2 py-1 rounded text-xs ${getSetupClass(trade.setup)}`}>
+                        {trade.setup}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className={trade.action === "Sell" ? "font-medium" : ""}>{trade.action === "Sell" ? trade.symbol : ""}</TableCell>
+                  <TableCell>{trade.action === "Sell" ? trade.qty : ""}</TableCell>
+                  <TableCell>{trade.action === "Sell" ? trade.time : ""}</TableCell>
+                  <TableCell>{trade.action === "Sell" ? trade.date : ""}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {longTrades.map((trade) => (
-                  <TableRow key={trade.id}>
-                    <TableCell>{trade.date}</TableCell>
-                    <TableCell className="font-medium">{trade.symbol}</TableCell>
-                    <TableCell>{trade.quantity}</TableCell>
-                    <TableCell>${trade.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-semibold">${trade.total.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-                {longTrades.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center">No long trades recorded</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-              <TableCaption>
-                Total: ${longTrades.reduce((sum, trade) => sum + trade.total, 0).toFixed(2)}
-              </TableCaption>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Short Trades Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-red-600">Short Trades (Sell)</CardTitle>
-            <CardDescription>
-              Positions you've sold
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
+              ))}
+              {tradeEntries.length === 0 && (
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+                  <TableCell colSpan={15} className="text-center">No trades recorded</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {shortTrades.map((trade) => (
-                  <TableRow key={trade.id}>
-                    <TableCell>{trade.date}</TableCell>
-                    <TableCell className="font-medium">{trade.symbol}</TableCell>
-                    <TableCell>{trade.quantity}</TableCell>
-                    <TableCell>${trade.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-semibold">${trade.total.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-                {shortTrades.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center">No short trades recorded</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-              <TableCaption>
-                Total: ${shortTrades.reduce((sum, trade) => sum + trade.total, 0).toFixed(2)}
-              </TableCaption>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default Journal
+// Helper functions for styling
+function getSetupClass(setup: string) {
+  switch (setup) {
+    case "Breakout":
+      return "bg-yellow-100 text-yellow-800";
+    case "Reversal":
+      return "bg-blue-100 text-blue-800";
+    case "Vwap":
+      return "bg-purple-100 text-purple-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+}
+
+function getReviewClass(review: string) {
+  switch (review) {
+    case "Good Entry":
+      return "bg-green-100 text-green-800";
+    case "Early Entry":
+      return "bg-blue-100 text-blue-800";
+    case "SL Hit":
+      return "bg-red-100 text-red-800";
+    case "Profit Exit":
+      return "bg-green-100 text-green-800";
+    case "Partial Exit":
+      return "bg-orange-100 text-orange-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+}
+
+export default Journal;
