@@ -1,4 +1,4 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Book, BarChart3, HomeIcon } from "lucide-react";
 import { SignedIn, UserButton } from "@clerk/clerk-react";
 import {
@@ -32,9 +32,6 @@ const items = [
 ];
 
 export function AppSidebar() {
-  const router = useRouter();
-  const currentPath = router.state.location.pathname;
-
   return (
     <Sidebar>
       <SidebarContent>
@@ -43,32 +40,16 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive =
-                  item.path === "/"
-                    ? currentPath === "/"
-                    : currentPath.startsWith(item.path);
-
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      className={
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                          : ""
-                      }
-                    >
-                      <Link to={item.path}>
-                        <item.icon
-                          className={`h-5 w-5 ${isActive ? "text-pepe-green" : ""}`}
-                        />
-                        <span>
-                          {isActive ? (
-                            <strong>{item.title}</strong>
-                          ) : (
-                            item.title
-                          )}
-                        </span>
+                    <SidebarMenuButton asChild>
+                      <Link
+                        to={item.path}
+                        className="[&.active]:bg-accent"
+                        activeOptions={{ exact: true }}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
