@@ -14,13 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { 
   Select, 
   SelectContent, 
@@ -28,20 +23,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 
 type TradeEntry = {
   id: number;
@@ -56,19 +38,6 @@ type TradeEntry = {
   result: string;
   resultValue: number;
 };
-
-const formSchema = z.object({
-  date: z.date(),
-  time: z.string(),
-  symbol: z.string().min(1, "Symbol is required").max(5),
-  qty: z.number().positive("Quantity must be positive"),
-  action: z.enum(["Buy", "Sell"]),
-  setup: z.string(),
-  price: z.number().positive("Price must be positive"),
-  review: z.string().optional(),
-  result: z.string().optional(),
-  resultValue: z.number().optional(),
-});
 
 const Journal = () => {
   // State to hold the trade entries
@@ -127,53 +96,64 @@ const Journal = () => {
     },
   ]);
 
-  // Form setup with react-hook-form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      date: new Date(),
-      time: format(new Date(), "hh:mma"),
-      symbol: "",
-      qty: 0,
-      action: "Buy",
-      setup: "",
-      price: 0,
-      review: "",
-      result: "",
-      resultValue: 0,
-    },
+  // New blank trade entry for direct input
+  const [newTrade, setNewTrade] = useState<Partial<TradeEntry>>({
+    date: format(new Date(), "dd/MM/yy"),
+    time: format(new Date(), "hh:mma"),
+    symbol: "",
+    qty: 0,
+    action: "Buy",
+    setup: "",
+    review: "",
+    price: 0,
+    result: "",
+    resultValue: 0,
   });
 
-  // Handle form submission
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newTrade: TradeEntry = {
+  // Handle change in new trade entry fields
+  const handleNewTradeChange = (field: keyof TradeEntry, value: any) => {
+    setNewTrade(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Add new trade to the list
+  const addNewTrade = () => {
+    if (!newTrade.symbol || !newTrade.qty || !newTrade.price) {
+      return; // Don't add incomplete trades
+    }
+
+    const tradeToAdd: TradeEntry = {
       id: Date.now(),
-      date: format(values.date, "dd/MM/yy"),
-      time: values.time,
-      symbol: values.symbol.toUpperCase(),
-      qty: values.qty,
-      action: values.action,
-      setup: values.setup,
-      review: values.review || "",
-      price: values.price,
-      result: values.resultValue ? `${values.resultValue < 0 ? "-" : ""}$ ${Math.abs(values.resultValue).toLocaleString()}` : "",
-      resultValue: values.resultValue || 0,
+      date: newTrade.date || format(new Date(), "dd/MM/yy"),
+      time: newTrade.time || format(new Date(), "hh:mma"),
+      symbol: newTrade.symbol || "",
+      qty: newTrade.qty || 0,
+      action: newTrade.action || "Buy",
+      setup: newTrade.setup || "N/A",
+      review: newTrade.review || "N/A",
+      price: newTrade.price || 0,
+      result: newTrade.resultValue ? `${newTrade.resultValue < 0 ? "-" : ""}$ ${Math.abs(newTrade.resultValue).toLocaleString()}` : "",
+      resultValue: newTrade.resultValue || 0,
     };
     
-    setTradeEntries((prev) => [...prev, newTrade]);
-    form.reset({
-      date: new Date(),
+    setTradeEntries(prev => [...prev, tradeToAdd]);
+    
+    // Reset the new trade entry
+    setNewTrade({
+      date: format(new Date(), "dd/MM/yy"),
       time: format(new Date(), "hh:mma"),
       symbol: "",
       qty: 0,
       action: "Buy",
       setup: "",
-      price: 0,
       review: "",
+      price: 0,
       result: "",
       resultValue: 0,
     });
-  }
+  };
 
   // Sort trades by date and time
   const sortedTrades = [...tradeEntries].sort((a, b) => {
@@ -190,232 +170,6 @@ const Journal = () => {
           <CardTitle>Trade Journal</CardTitle>
           <CardDescription>
             Record and track your trading activity
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Date Field */}
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "dd/MM/yy")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Time Field */}
-                <FormField
-                  control={form.control}
-                  name="time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Time</FormLabel>
-                      <FormControl>
-                        <Input placeholder="09:30AM" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Quantity Field */}
-                <FormField
-                  control={form.control}
-                  name="qty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Qty</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="100" 
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Symbol Field */}
-                <FormField
-                  control={form.control}
-                  name="symbol"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Symbol</FormLabel>
-                      <FormControl>
-                        <Input placeholder="AAPL" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Setup Field */}
-                <FormField
-                  control={form.control}
-                  name="setup"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Setup</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select setup" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Breakout">Breakout</SelectItem>
-                          <SelectItem value="Reversal">Reversal</SelectItem>
-                          <SelectItem value="Vwap">Vwap</SelectItem>
-                          <SelectItem value="N/A">N/A</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Review Field */}
-                <FormField
-                  control={form.control}
-                  name="review"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Review</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select review" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Good Entry">Good Entry</SelectItem>
-                          <SelectItem value="Early Entry">Early Entry</SelectItem>
-                          <SelectItem value="SL Hit">SL Hit</SelectItem>
-                          <SelectItem value="Profit Exit">Profit Exit</SelectItem>
-                          <SelectItem value="Partial Exit">Partial Exit</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Price Field */}
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="180.00" 
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Result Value Field */}
-                <FormField
-                  control={form.control}
-                  name="resultValue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Result ($)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="0.00" 
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Action Field */}
-                <FormField
-                  control={form.control}
-                  name="action"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Action</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select action" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Buy">Buy</SelectItem>
-                          <SelectItem value="Sell">Sell</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Submit Button */}
-                <Button type="submit" className="self-end">
-                  Add Trade
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Unified Trades Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Trade History</CardTitle>
-          <CardDescription>
-            Complete record of your trading activity
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -440,6 +194,208 @@ const Journal = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {/* Row for adding new trade */}
+              <TableRow className="border-t-2 border-b-2 border-dashed border-primary/20">
+                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Buy" && (
+                    <Input 
+                      value={newTrade.date || ""} 
+                      onChange={(e) => handleNewTradeChange("date", e.target.value)} 
+                      className="h-8" 
+                      placeholder="DD/MM/YY"
+                    />
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Buy" && (
+                    <Input 
+                      value={newTrade.time || ""} 
+                      onChange={(e) => handleNewTradeChange("time", e.target.value)} 
+                      className="h-8" 
+                      placeholder="HH:MMA"
+                    />
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Buy" && (
+                    <Input 
+                      type="number" 
+                      value={newTrade.qty || ""} 
+                      onChange={(e) => handleNewTradeChange("qty", Number(e.target.value))} 
+                      className="h-8" 
+                      placeholder="100"
+                    />
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Buy" && (
+                    <Input 
+                      value={newTrade.symbol || ""} 
+                      onChange={(e) => handleNewTradeChange("symbol", e.target.value.toUpperCase())} 
+                      className="h-8" 
+                      placeholder="AAPL"
+                    />
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Buy" && (
+                    <Select 
+                      value={newTrade.setup || ""} 
+                      onValueChange={(value) => handleNewTradeChange("setup", value)}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="Setup" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Breakout">Breakout</SelectItem>
+                        <SelectItem value="Reversal">Reversal</SelectItem>
+                        <SelectItem value="Vwap">Vwap</SelectItem>
+                        <SelectItem value="N/A">N/A</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Buy" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Buy" && (
+                    <Select 
+                      value={newTrade.review || ""} 
+                      onValueChange={(value) => handleNewTradeChange("review", value)}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="Review" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Good Entry">Good Entry</SelectItem>
+                        <SelectItem value="Early Entry">Early Entry</SelectItem>
+                        <SelectItem value="SL Hit">SL Hit</SelectItem>
+                        <SelectItem value="N/A">N/A</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Input 
+                    type="number" 
+                    value={newTrade.price || ""} 
+                    onChange={(e) => handleNewTradeChange("price", Number(e.target.value))} 
+                    className="h-8" 
+                    placeholder="0.00"
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Input 
+                      type="number" 
+                      value={newTrade.resultValue || ""} 
+                      onChange={(e) => handleNewTradeChange("resultValue", Number(e.target.value))} 
+                      className="h-8" 
+                      placeholder="0.00"
+                    />
+                    <Select 
+                      value={newTrade.action || "Buy"} 
+                      onValueChange={(value: "Buy" | "Sell") => handleNewTradeChange("action", value)}
+                    >
+                      <SelectTrigger className="h-8 w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Buy">Buy</SelectItem>
+                        <SelectItem value="Sell">Sell</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={addNewTrade} size="sm" className="h-8">Add</Button>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Input 
+                    type="number" 
+                    value={newTrade.price || ""} 
+                    onChange={(e) => handleNewTradeChange("price", Number(e.target.value))} 
+                    className="h-8" 
+                    placeholder="0.00"
+                    disabled={newTrade.action !== "Sell"}
+                  />
+                </TableCell>
+                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Sell" && (
+                    <Select 
+                      value={newTrade.review || ""} 
+                      onValueChange={(value) => handleNewTradeChange("review", value)}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="Review" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Good Entry">Good Entry</SelectItem>
+                        <SelectItem value="Early Entry">Early Entry</SelectItem>
+                        <SelectItem value="SL Hit">SL Hit</SelectItem>
+                        <SelectItem value="N/A">N/A</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Sell" && (
+                    <Select 
+                      value={newTrade.setup || ""} 
+                      onValueChange={(value) => handleNewTradeChange("setup", value)}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="Setup" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Breakout">Breakout</SelectItem>
+                        <SelectItem value="Reversal">Reversal</SelectItem>
+                        <SelectItem value="Vwap">Vwap</SelectItem>
+                        <SelectItem value="N/A">N/A</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Sell" && (
+                    <Input 
+                      value={newTrade.symbol || ""} 
+                      onChange={(e) => handleNewTradeChange("symbol", e.target.value.toUpperCase())} 
+                      className="h-8" 
+                      placeholder="AAPL"
+                    />
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Sell" && (
+                    <Input 
+                      type="number" 
+                      value={newTrade.qty || ""} 
+                      onChange={(e) => handleNewTradeChange("qty", Number(e.target.value))} 
+                      className="h-8" 
+                      placeholder="100"
+                    />
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Sell" && (
+                    <Input 
+                      value={newTrade.time || ""} 
+                      onChange={(e) => handleNewTradeChange("time", e.target.value)} 
+                      className="h-8" 
+                      placeholder="HH:MMA"
+                    />
+                  )}
+                </TableCell>
+                <TableCell className={newTrade.action === "Sell" ? "" : "bg-gray-100"}>
+                  {newTrade.action === "Sell" && (
+                    <Input 
+                      value={newTrade.date || ""} 
+                      onChange={(e) => handleNewTradeChange("date", e.target.value)} 
+                      className="h-8" 
+                      placeholder="DD/MM/YY"
+                    />
+                  )}
+                </TableCell>
+              </TableRow>
+
+              {/* Display existing trades */}
               {sortedTrades.map((trade) => (
                 <TableRow key={trade.id} className={trade.action === "Buy" ? "bg-green-50/10" : "bg-red-50/10"}>
                   <TableCell>{trade.action === "Buy" ? trade.date : ""}</TableCell>
