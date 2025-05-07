@@ -1,0 +1,18 @@
+name = "tradepepe-frontend"
+type = "javascript"
+
+[[build]]
+command = "yarn run build"
+cwd = "."
+output_dir = "dist"
+
+# Environment variables
+[build.environment]
+BUN_INSTALL = "/opt/bun"
+
+[[env]]
+name = "NODE_VERSION"
+value = "20.x"
+
+# Optionally, specify the compatibility date for the Workers environment
+compatibility_date = "2025-05-05"
