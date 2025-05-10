@@ -1,31 +1,9 @@
-import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { format } from "date-fns";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { PlusIcon } from "lucide-react";
+import { useState } from "react";
 
-type TradeEntry = {
+type OrderType = {
   id: number;
   date: string;
   time: string;
@@ -35,566 +13,177 @@ type TradeEntry = {
   setup: string;
   review: string;
   price: number;
-  result: string;
-  resultValue: number;
+  note: string;
 };
 
-const Journal = () => {
-  // State to hold the trade entries
-  const [tradeEntries, setTradeEntries] = useState<TradeEntry[]>([
+type TradeType = {
+  id: number;
+  symbol: string;
+  direction: "Long" | "Short";
+  buyOrders: OrderType[];
+  sellOrders: OrderType[];
+  netResult: number;
+  date: string;
+};
+
+const Index = () => {
+  const [trades, setTrades] = useState<TradeType[]>([
     {
-      id: 1,
-      date: "23/12/24",
-      time: "09:14AM",
-      symbol: "AAPL",
-      qty: 100,
-      action: "Buy",
-      setup: "Breakout",
-      review: "Good Entry",
-      price: 180,
-      result: "$ 650",
-      resultValue: 650,
-    },
-    {
-      id: 2,
-      date: "23/12/24",
-      time: "09:50AM",
-      symbol: "AAPL",
-      qty: 75,
-      action: "Sell",
-      setup: "Reversal",
-      review: "Early Entry",
-      price: 183,
-      result: "$ 510",
-      resultValue: 510,
-    },
-    {
-      id: 3,
-      date: "23/12/24",
-      time: "10:15AM",
-      symbol: "AAPL",
-      qty: 100,
-      action: "Buy",
-      setup: "Reversal",
-      review: "Early Entry",
-      price: 180,
-      result: "$ 1,000",
-      resultValue: 1000,
-    },
-    {
-      id: 4,
-      date: "23/12/24",
-      time: "11:05AM",
-      symbol: "AAPL",
-      qty: 100,
-      action: "Sell",
-      setup: "N/A",
-      review: "SL Hit",
-      price: 178,
-      result: "-$ 200",
-      resultValue: -200,
+      id: Date.now(),
+      symbol: "BTC/USDT",
+      direction: "Long",
+      buyOrders: [
+        {
+          id: 1,
+          date: "2025-05-10",
+          time: "14:30",
+          symbol: "BTC/USDT",
+          qty: 1,
+          action: "Buy",
+          setup: "Breakout",
+          review: "Good entry on volume spike",
+          price: 60000,
+          note: "Entered on 1H breakout",
+        },
+      ],
+      sellOrders: [
+        {
+          id: 2,
+          date: "2025-05-10",
+          time: "15:00",
+          symbol: "BTC/USDT",
+          qty: 1,
+          action: "Sell",
+          setup: "TP level",
+          review: "Closed near resistance",
+          price: 61000,
+          note: "TP hit, good R:R",
+        },
+      ],
+      netResult: 1000,
+      date: "2025-05-10",
     },
   ]);
 
-  // New blank trade entry for direct input
-  const [newTrade, setNewTrade] = useState<Partial<TradeEntry>>({
-    date: format(new Date(), "dd/MM/yy"),
-    time: format(new Date(), "hh:mma"),
-    symbol: "",
-    qty: 0,
-    action: "Buy",
-    setup: "",
-    review: "",
-    price: 0,
-    result: "",
-    resultValue: 0,
-  });
+  const [buyOrders, setBuyOrders] = useState<OrderType[]>([]);
+  const [sellOrders, setSellOrders] = useState<OrderType[]>([]);
+  const [symbol, setSymbol] = useState("");
+  const [direction, setDirection] = useState<"Long" | "Short">("Long");
 
-  // Handle change in new trade entry fields
-  const handleNewTradeChange = (field: keyof TradeEntry, value: any) => {
-    setNewTrade((prev) => ({
+  const handleAddBuyOrder = () => {
+    setBuyOrders((prev) => [
       ...prev,
-      [field]: value,
-    }));
+      {
+        id: Date.now(),
+        date: "2025-05-10",
+        time: "14:30",
+        symbol,
+        qty: 1,
+        action: "Buy",
+        setup: "Breakout",
+        review: "Strong breakout candle",
+        price: 60000,
+        note: "Good volume",
+      },
+    ]);
   };
 
-  // Add new trade to the list
-  const addNewTrade = () => {
-    if (!newTrade.symbol || !newTrade.qty || !newTrade.price) {
-      return; // Don't add incomplete trades
-    }
+  const handleAddSellOrder = () => {
+    setSellOrders((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        date: "2025-05-10",
+        time: "15:00",
+        symbol,
+        qty: 1,
+        action: "Sell",
+        setup: "TP zone",
+        review: "Exhaustion near resistance",
+        price: 61000,
+        note: "Closed for profit",
+      },
+    ]);
+  };
 
-    const tradeToAdd: TradeEntry = {
+  const handleAddTrade = () => {
+    const netResult =
+      sellOrders.reduce((acc, o) => acc + o.price * o.qty, 0) -
+      buyOrders.reduce((acc, o) => acc + o.price * o.qty, 0);
+
+    const newTrade: TradeType = {
       id: Date.now(),
-      date: newTrade.date || format(new Date(), "dd/MM/yy"),
-      time: newTrade.time || format(new Date(), "hh:mma"),
-      symbol: newTrade.symbol || "",
-      qty: newTrade.qty || 0,
-      action: newTrade.action || "Buy",
-      setup: newTrade.setup || "N/A",
-      review: newTrade.review || "N/A",
-      price: newTrade.price || 0,
-      result: newTrade.resultValue
-        ? `${newTrade.resultValue < 0 ? "-" : ""}$ ${Math.abs(newTrade.resultValue).toLocaleString()}`
-        : "",
-      resultValue: newTrade.resultValue || 0,
+      symbol,
+      direction,
+      buyOrders,
+      sellOrders,
+      netResult,
+      date: new Date().toISOString().slice(0, 10),
     };
 
-    setTradeEntries((prev) => [...prev, tradeToAdd]);
-
-    // Reset the new trade entry
-    setNewTrade({
-      date: format(new Date(), "dd/MM/yy"),
-      time: format(new Date(), "hh:mma"),
-      symbol: "",
-      qty: 0,
-      action: "Buy",
-      setup: "",
-      review: "",
-      price: 0,
-      result: "",
-      resultValue: 0,
-    });
+    setTrades((prev) => [newTrade, ...prev]);
+    setBuyOrders([]);
+    setSellOrders([]);
+    setSymbol("");
   };
 
-  const sortedTrades = [...tradeEntries].sort((b, a) => {
-    const dateCompare =
-      //@ts-ignore
-      new Date(a.date.split("/").reverse().join("-")) -
-      //@ts-ignore
-      new Date(b.date.split("/").reverse().join("-"));
-    if (dateCompare !== 0) return dateCompare;
-    return a.time.localeCompare(b.time);
-  });
 
   return (
-    <div className="container mx-auto py-6 space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Trade Journal</CardTitle>
-          <CardDescription>
-            Record and track your trading activity
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Symbol</TableHead>
-                <TableHead>Setup</TableHead>
-                <TableHead>Review</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Result</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Review</TableHead>
-                <TableHead>Setup</TableHead>
-                <TableHead>Symbol</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {/* Row for adding new trade */}
-              <TableRow className="border-t-2 border-b-2 border-dashed border-primary/20">
-                <TableCell
-                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Buy" && (
-                    <Input
-                      value={newTrade.date || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange("date", e.target.value)
-                      }
-                      className="h-8"
-                      placeholder="DD/MM/YY"
-                    />
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Buy" && (
-                    <Input
-                      value={newTrade.time || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange("time", e.target.value)
-                      }
-                      className="h-8"
-                      placeholder="HH:MMA"
-                    />
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Buy" && (
-                    <Input
-                      type="number"
-                      value={newTrade.qty || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange("qty", Number(e.target.value))
-                      }
-                      className="h-8"
-                      placeholder="100"
-                    />
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Buy" && (
-                    <Input
-                      value={newTrade.symbol || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange(
-                          "symbol",
-                          e.target.value.toUpperCase(),
-                        )
-                      }
-                      className="h-8"
-                      placeholder="AAPL"
-                    />
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Buy" && (
-                    <Select
-                      value={newTrade.setup || ""}
-                      onValueChange={(value) =>
-                        handleNewTradeChange("setup", value)
-                      }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Setup" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Breakout">Breakout</SelectItem>
-                        <SelectItem value="Reversal">Reversal</SelectItem>
-                        <SelectItem value="Vwap">Vwap</SelectItem>
-                        <SelectItem value="N/A">N/A</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Buy" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Buy" && (
-                    <Select
-                      value={newTrade.review || ""}
-                      onValueChange={(value) =>
-                        handleNewTradeChange("review", value)
-                      }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Review" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Good Entry">Good Entry</SelectItem>
-                        <SelectItem value="Early Entry">Early Entry</SelectItem>
-                        <SelectItem value="SL Hit">SL Hit</SelectItem>
-                        <SelectItem value="N/A">N/A</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Input
-                    type="number"
-                    value={newTrade.price || ""}
-                    onChange={(e) =>
-                      handleNewTradeChange("price", Number(e.target.value))
-                    }
-                    className="h-8"
-                    placeholder="0.00"
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      type="number"
-                      value={newTrade.resultValue || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange(
-                          "resultValue",
-                          Number(e.target.value),
-                        )
-                      }
-                      className="h-8"
-                      placeholder="0.00"
-                    />
-                    <Select
-                      value={newTrade.action || "Buy"}
-                      onValueChange={(value: "Buy" | "Sell") =>
-                        handleNewTradeChange("action", value)
-                      }
-                    >
-                      <SelectTrigger className="h-8 w-20">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Buy">Buy</SelectItem>
-                        <SelectItem value="Sell">Sell</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={addNewTrade} size="sm" className="h-8">
-                      Add
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Input
-                    type="number"
-                    value={newTrade.price || ""}
-                    onChange={(e) =>
-                      handleNewTradeChange("price", Number(e.target.value))
-                    }
-                    className="h-8"
-                    placeholder="0.00"
-                    disabled={newTrade.action !== "Sell"}
-                  />
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Sell" && (
-                    <Select
-                      value={newTrade.review || ""}
-                      onValueChange={(value) =>
-                        handleNewTradeChange("review", value)
-                      }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Review" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Good Entry">Good Entry</SelectItem>
-                        <SelectItem value="Early Entry">Early Entry</SelectItem>
-                        <SelectItem value="SL Hit">SL Hit</SelectItem>
-                        <SelectItem value="N/A">N/A</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Sell" && (
-                    <Select
-                      value={newTrade.setup || ""}
-                      onValueChange={(value) =>
-                        handleNewTradeChange("setup", value)
-                      }
-                    >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Setup" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Breakout">Breakout</SelectItem>
-                        <SelectItem value="Reversal">Reversal</SelectItem>
-                        <SelectItem value="Vwap">Vwap</SelectItem>
-                        <SelectItem value="N/A">N/A</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Sell" && (
-                    <Input
-                      value={newTrade.symbol || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange(
-                          "symbol",
-                          e.target.value.toUpperCase(),
-                        )
-                      }
-                      className="h-8"
-                      placeholder="AAPL"
-                    />
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Sell" && (
-                    <Input
-                      type="number"
-                      value={newTrade.qty || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange("qty", Number(e.target.value))
-                      }
-                      className="h-8"
-                      placeholder="100"
-                    />
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Sell" && (
-                    <Input
-                      value={newTrade.time || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange("time", e.target.value)
-                      }
-                      className="h-8"
-                      placeholder="HH:MMA"
-                    />
-                  )}
-                </TableCell>
-                <TableCell
-                  className={newTrade.action === "Sell" ? "" : "bg-gray-100"}
-                >
-                  {newTrade.action === "Sell" && (
-                    <Input
-                      value={newTrade.date || ""}
-                      onChange={(e) =>
-                        handleNewTradeChange("date", e.target.value)
-                      }
-                      className="h-8"
-                      placeholder="DD/MM/YY"
-                    />
-                  )}
-                </TableCell>
-              </TableRow>
+    <div className="p-8 space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Start journaling your trades</h2>
+        <Button onClick={handleAddTrade} className="flex items-center gap-2">
+          <PlusIcon size={16} /> Add Trade
+        </Button>
+      </div>
 
-              {/* Display existing trades */}
-              {sortedTrades.map((trade) => (
-                <TableRow
-                  key={trade.id}
-                  className={
-                    trade.action === "Buy" ? "bg-green-50/10" : "bg-red-50/10"
-                  }
-                >
-                  <TableCell>
-                    {trade.action === "Buy" ? trade.date : ""}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Buy" ? trade.time : ""}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Buy" ? trade.qty : ""}
-                  </TableCell>
-                  <TableCell
-                    className={trade.action === "Buy" ? "font-medium" : ""}
-                  >
-                    {trade.action === "Buy" ? trade.symbol : ""}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Buy" && (
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${getSetupClass(trade.setup)}`}
-                      >
-                        {trade.setup}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Buy" && (
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${getReviewClass(trade.review)}`}
-                      >
-                        {trade.review}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    ${trade.price.toFixed(2)}
-                  </TableCell>
-                  <TableCell
-                    className={`font-bold ${trade.resultValue < 0 ? "text-red-500" : "text-green-500"}`}
-                  >
-                    {trade.result}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    ${trade.price.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Sell" && (
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${getReviewClass(trade.review)}`}
-                      >
-                        {trade.review}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Sell" && (
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${getSetupClass(trade.setup)}`}
-                      >
-                        {trade.setup}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell
-                    className={trade.action === "Sell" ? "font-medium" : ""}
-                  >
-                    {trade.action === "Sell" ? trade.symbol : ""}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Sell" ? trade.qty : ""}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Sell" ? trade.time : ""}
-                  </TableCell>
-                  <TableCell>
-                    {trade.action === "Sell" ? trade.date : ""}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {tradeEntries.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={15} className="text-center">
-                    No trades recorded
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {trades.length === 0 ? (
+        <p className="text-gray-500">No trades added yet.</p>
+      ) : (
+        <div className="space-y-4">
+          {trades.map((trade) => (
+            <Card key={trade.id} className="border p-4 rounded-lg shadow-sm">
+              <CardHeader className="text-lg font-medium">
+                {trade.symbol} — {trade.direction}
+              </CardHeader>
+              <CardContent className="grid grid-cols-3 items-center">
+                <div className="mt-2">
+                  <p className="font-semibold">Buy Orders:</p>
+                  <ul className="list-disc ml-5 text-sm">
+                    {trade.buyOrders.map((order) => (
+                      <li key={order.id}>
+                        {order.time} — {order.qty} @ ${order.price} (
+                        {order.setup})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex flex-col justify-center">
+                  <p className="text-sm text-gray-600">Date: {trade.date}</p>
+                  <p className="text-sm text-gray-600">
+                    Net Result: ${trade.netResult}
+                  </p>
+                </div>
+
+                <div className="flex flex-col justify-center">
+                  <p className="font-semibold">Sell Orders:</p>
+                  <ul className="list-disc ml-5 text-sm">
+                    {trade.sellOrders.map((order) => (
+                      <li key={order.id}>
+                        {order.time} — {order.qty} @ ${order.price} (
+                        {order.setup})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-// Helper functions for styling
-function getSetupClass(setup: string) {
-  switch (setup) {
-    case "Breakout":
-      return "bg-yellow-100 text-yellow-800";
-    case "Reversal":
-      return "bg-blue-100 text-blue-800";
-    case "Vwap":
-      return "bg-purple-100 text-purple-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
-
-function getReviewClass(review: string) {
-  switch (review) {
-    case "Good Entry":
-      return "bg-green-100 text-green-800";
-    case "Early Entry":
-      return "bg-blue-100 text-blue-800";
-    case "SL Hit":
-      return "bg-red-100 text-red-800";
-    case "Profit Exit":
-      return "bg-green-100 text-green-800";
-    case "Partial Exit":
-      return "bg-orange-100 text-orange-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
-
-export default Journal;
+export default Index;
